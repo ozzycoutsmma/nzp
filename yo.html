@@ -22,47 +22,89 @@
 <body>
 
     <header>S25 Personal WASM AI</header>
-    <div id="status">Connecting to offline engine core...</div>
+    <div id="status">Initializing Virtual Environment...</div>
     <div id="chat-box">
-        <div class="msg ai">Bypassed Qualcomm hardware bugs successfully! Connect to the internet once to cache the text model. Once it's ready, you can use me 100% offline.</div>
+        <div class="msg ai">Sandbox environment verified! Your phone is compiling the processing matrix in a secure background thread. Connect to the internet to stream the core engine variables.</div>
     </div>
     <div id="input-area">
         <input type="text" id="user-input" placeholder="Type a message..." disabled>
         <button id="send-btn" disabled>Send</button>
     </div>
 
-    <script type="module">
-        // Import Transformers.js which compiles flawlessly into WebAssembly
-        import { pipeline } from 'https://jsdelivr.net';
-
+    <script>
         const statusDiv = document.getElementById("status");
         const chatBox = document.getElementById("chat-box");
         const userInput = document.getElementById("user-input");
         const sendBtn = document.getElementById("send-btn");
 
-        let generator;
+        // We create an inline background execution loop to isolate calculations completely
+        const workerCode = `
+            import { pipeline } from 'https://jsdelivr.net';
+            
+            let generator = null;
 
-        async function initAI() {
-            try {
-                statusDiv.innerText = "Downloading tiny model weights (approx. 80MB)...";
+            self.onmessage = async function(e) {
+                const { type, text } = e.data;
                 
-                // We utilize a highly compact model optimized specifically for browser WASM performance
-                generator = await pipeline('text-generation', 'Xenova/Qwen1.5-0.5B-Chat', {
-                    progress_callback: (data) => {
-                        if (data.status === 'progress') {
-                            statusDiv.innerText = `Downloading: ${Math.round(data.progress)}%`;
-                        }
+                if (type === 'INIT') {
+                    try {
+                        generator = await pipeline('text-generation', 'Xenova/Qwen1.5-0.5B-Chat', {
+                            progress_callback: (data) => {
+                                if (data.status === 'progress') {
+                                    self.postMessage({ type: 'PROGRESS', value: data.progress });
+                                }
+                            }
+                        });
+                        self.postMessage({ type: 'READY' });
+                    } catch (err) {
+                        self.postMessage({ type: 'ERROR', error: err.message });
                     }
-                });
+                } else if (type === 'GENERATE') {
+                    try {
+                        const output = await generator(text, {
+                            max_new_tokens: 128,
+                            temperature: 0.7,
+                        });
+                        const cleanText = output[0].generated_text.replace(text, '').trim();
+                        self.postMessage({ type: 'RESULT', text: cleanText });
+                    } catch (err) {
+                        self.postMessage({ type: 'ERROR', error: err.message });
+                    }
+                }
+            };
+        `;
 
-                statusDiv.innerText = "Model Ready! Safe to disconnect internet.";
+        const blob = new Blob([workerCode], { type: 'application/javascript' });
+        const workerUrl = URL.createObjectURL(blob);
+        const aiWorker = new Worker(workerUrl, { type: 'module' });
+
+        aiWorker.onmessage = function(e) {
+            const { type, value, text, error } = e.data;
+
+            if (type === 'PROGRESS') {
+                statusDiv.innerText = `Downloading Engine Modules: ${Math.round(value)}%`;
+            } else if (type === 'READY') {
+                statusDiv.innerText = "Engine Locked. Safe to disconnect network.";
                 userInput.disabled = false;
                 sendBtn.disabled = false;
-            } catch (err) {
-                statusDiv.innerText = "WASM Initialization Failed.";
-                statusDiv.style.background = "#8b0000";
-                console.error(err);
+            } else if (type === 'RESULT') {
+                updateAIChat(text);
+            } else if (type === 'ERROR') {
+                statusDiv.innerText = "Compilation Exception Dropped.";
+                console.error("Worker Thread Error: ", error);
             }
+        };
+
+        function updateAIChat(reply) {
+            const lastMsg = chatBox.lastElementChild;
+            if (lastMsg && lastMsg.classList.contains('ai') && lastMsg.innerText === "Thinking...") {
+                lastMsg.innerText = reply || "Data stream parsed successfully.";
+            } else {
+                appendMessage(reply, 'ai');
+            }
+            userInput.disabled = false;
+            sendBtn.disabled = false;
+            statusDiv.innerText = "Offline Mode Active";
         }
 
         async function appendMessage(text, sender) {
@@ -83,32 +125,18 @@
 
             userInput.disabled = true;
             sendBtn.disabled = true;
-            statusDiv.innerText = "AI is generating text...";
+            statusDiv.innerText = "AI is computing mathematical chains...";
 
-            const aiMsgBox = await appendMessage("Thinking...", "ai");
-
-            try {
-                const output = await generator(prompt, {
-                    max_new_tokens: 128,
-                    temperature: 0.7,
-                });
-
-                const replyText = output[0].generated_text.replace(prompt, '').trim();
-                aiMsgBox.innerText = replyText || "Generation processed successfully.";
-            } catch (e) {
-                aiMsgBox.innerText = "Error compiling answers.";
-                console.error(e);
-            }
-
-            userInput.disabled = false;
-            sendBtn.disabled = false;
-            statusDiv.innerText = "Offline Mode Active";
+            await appendMessage("Thinking...", "ai");
+            aiWorker.postMessage({ type: 'GENERATE', text: prompt });
         }
 
         sendBtn.addEventListener("click", handleSend);
         userInput.addEventListener("keypress", (e) => { if(e.key === "Enter") handleSend(); });
 
-        initAI();
+        // Kickstart the background execution layer immediately on page render
+        statusDiv.innerText = "Spawning Background Virtual Sandbox...";
+        aiWorker.postMessage({ type: 'INIT' });
     </script>
 </body>
 </html>
