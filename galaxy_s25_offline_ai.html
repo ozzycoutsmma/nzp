@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline Mobile AI Guide</title>
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --text-color: #ffffff;
+            --accent-color: #3b82f6;
+            --border-color: #444444;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            color: var(--accent-color);
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+        .card-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        ol {
+            margin: 0;
+            padding-left: 20px;
+        }
+        li {
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+        code {
+            background-color: rgba(255,255,255,0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .badge {
+            background-color: var(--accent-color);
+            color: white;
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-weight: normal;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Galaxy S25 Offline AI Setup</h1>
+        
+        <div class="card">
+            <div class="card-title">📱 Method 1: Google Play Store <span class="badge">Easiest</span></div>
+            <ol>
+                <li>Open the Google Play Store and search for <code>Layla Lite</code>.</li>
+                <li>Download and open the app.</li>
+                <li>Follow the onboarding steps to download a <code>Llama 3.2 (1B or 3B)</code> model internally.</li>
+                <li>Turn off your mobile data/Wi-Fi and start chatting 100% offline.</li>
+            </ol>
+        </div>
+
+        <div class="card">
+            <div class="card-title">🛠️ Method 2: GitHub + Custom GGUF <span class="badge">Advanced</span></div>
+            <ol>
+                <li>Download and install <code>ChatterUI</code> from its official GitHub repository releases page.</li>
+                <li>Go to Hugging Face on a browser and download a mobile-optimized <code>GGUF</code> model file (e.g., <code>Llama-3.2-3B-Instruct-Q4_K_M.gguf</code>).</li>
+                <li>Open ChatterUI, navigate to settings, select the local execution backend, and link it to your downloaded <code>.gguf</code> file.</li>
+                <li>Enter Airplane Mode to experience total offline privacy.</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>
